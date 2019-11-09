@@ -48,16 +48,16 @@ module Enumerable
     my_each { |num| puts yield(num) }
   end
 
-  def my_inject # fix required
+  def my_inject
     result = self[0]
-    my_each do |num|
-      result = yield(result, num)
+    my_each_with_index do |num, i|
+      result = yield(result, num) unless i.zero?
     end
     result
   end
 end
 
-arr = [2, 2, 3, 4, 5, 6]
+arr = [1, 2, 3, 4, 5, 6]
 
 # my_each method
 arr.my_each { |a| puts a }
@@ -92,5 +92,5 @@ puts(arr.my_map { |a| a * 2 })
 puts(arr.map { |a| a * 2 })
 
 # my_inject method
-puts(arr.my_inject { |sum, a| sum + a })
-puts(arr.inject { |sum, a| sum + a })
+puts(arr.my_inject { |sum, a| sum * a })
+puts(arr.inject { |sum, a| sum * a })
