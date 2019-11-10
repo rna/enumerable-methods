@@ -45,7 +45,7 @@ module Enumerable
   end
 
   def my_map(newproc = (no_argument_passed = true))
-    return my_each { |num| puts yield(num) } if no_argument_passed
+    return my_each { |num| puts yield(num) } if no_argument_passed || newproc.nil?
 
     my_each { |num| puts newproc.call(num) }
   end
