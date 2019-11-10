@@ -44,8 +44,10 @@ module Enumerable
     count
   end
 
-  def my_map
-    my_each { |num| puts yield(num) }
+  def my_map(newproc = (no_argument_passed = true))
+    return my_each { |num| puts yield(num) } if no_argument_passed
+
+    my_each { |num| puts newproc.call(num) }
   end
 
   def my_inject
@@ -56,6 +58,13 @@ module Enumerable
     result
   end
 end
+
+# method to test the my_inject method
+def multiply_els(arr)
+  arr.my_inject { |result, num| result * num }
+end
+
+# Testing each method against original with puts
 
 arr = [1, 2, 3, 4, 5, 6]
 
@@ -92,5 +101,11 @@ puts(arr.my_map { |a| a * 2 })
 puts(arr.map { |a| a * 2 })
 
 # my_inject method
-puts(arr.my_inject { |sum, a| sum * a })
-puts(arr.inject { |sum, a| sum * a })
+puts(arr.my_inject { |sum, a| sum + a })
+puts(arr.inject { |sum, a| sum + a })
+
+# Testing my_inject method with multiply_els method
+puts multiply_els([2, 4, 5])
+
+# Testing my_map method with passing Proc & Block at the same time
+arr.my_map(proc { |a| a * 3 }) { |a| a * 2 }
