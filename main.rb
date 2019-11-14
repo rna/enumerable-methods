@@ -1,7 +1,10 @@
 # frozen_string_literal:true
 
 module Enumerable
+  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def my_each
+    return to_enum(:my_each) unless block_given?
+
     i = 0
     while i < size
       yield(self[i])
@@ -10,6 +13,8 @@ module Enumerable
   end
 
   def my_each_with_index
+    return to_enum(:my_each_with_index) unless block_given?
+
     i = 0
     while i < size
       yield(self[i], i)
@@ -18,50 +23,92 @@ module Enumerable
   end
 
   def my_select
-    my_each { |num| puts num if yield(num) }
+    return to_enum(:my_select) unless block_given?
+
+    result = []
+    my_each { |element| result.push(element) if yield(element) }
+    result
   end
 
-  def my_all?
-    my_each { |num| return false unless yield(num) }
+  def my_all?(arg = nil)
+    if block_given?
+      my_each { |element| return false unless yield(element) }
+    elsif arg.is_a? Regexp
+      my_each { |element| return false unless arg =~ element }
+    elsif arg.is_a? Class
+      my_each { |element| return false unless element.class == arg }
+    else
+      my_each { |element| return false unless element }
+    end
     true
   end
 
-  def my_any?
-    my_each { |num| return true unless yield(num) }
+  def my_any?(arg = nil)
+    if block_given?
+      my_each { |element| return true if yield(element) }
+    elsif arg.is_a? Regexp
+      my_each { |element| return true if arg =~ element }
+    elsif arg.is_a? Class
+      my_each { |element| return true if element.class == arg }
+    else
+      my_each { |element| return true if element }
+    end
     false
   end
 
-  def my_none?
-    my_each { |num| return false if yield(num) }
+  def my_none?(arg = nil)
+    if block_given?
+      my_each { |element| return false if yield(element) }
+    elsif arg.is_a? Regexp
+      my_each { |element| return false if arg =~ element }
+    elsif arg.is_a? Class
+      my_each { |element| return false if element.class == arg }
+    else
+      my_each { |element| return false if element }
+    end
     true
   end
 
   def my_count
     count = 0
-    my_each do |num|
-      count += 1 if yield(num)
+    my_each do |element|
+      count += 1 if yield(element)
     end
     count
   end
 
-  def my_map(newproc = (no_argument_passed = true))
-    return my_each { |num| puts yield(num) } if no_argument_passed || newproc.nil?
+  def my_map(my_proc = nil)
+    return to_enum(:my_map) unless block_given? || my_proc
 
-    my_each { |num| puts newproc.call(num) }
-  end
-
-  def my_inject
-    result = self[0]
-    my_each_with_index do |num, i|
-      result = yield(result, num) unless i.zero?
+    result = []
+    if my_proc.nil?
+      my_each { |element| result << yield(element) }
+    else
+      my_each { |element| result << (my_proc.call element) }
     end
     result
   end
+
+  def my_inject(init = nil, arg = nil)
+    result = self[0]
+    if block_given?
+      my_each_with_index do |element, i|
+        result = yield(result, element) unless i.zero?
+      end
+    else
+      my_each_with_index do |element, i|
+        sym = init.is_a?(Symbol) ? init : arg
+        result = result.send(sym, element) unless i.zero?
+      end
+    end
+    result
+  end
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 end
 
 # method to test the my_inject method
 def multiply_els(arr)
-  arr.my_inject { |result, num| result * num }
+  arr.my_inject { |result, element| result * element }
 end
 
 # Testing each method against original with puts
@@ -83,10 +130,16 @@ puts(arr.select { |a| a > 3 })
 # my_all? method
 puts(arr.my_all? { |a| (a % 3).zero? })
 puts(arr.all? { |a| (a % 3).zero? })
+puts([nil, true, 99].my_all?)
+puts([nil, true, 99].all?)
+puts(arr.my_all?(String))
 
 # my_any? method
 puts(arr.my_any? { |a| (a % 3).zero? })
 puts(arr.any? { |a| (a % 3).zero? })
+puts([nil, nil, nil].my_any?)
+puts([nil, nil, nil].any?)
+puts(arr.my_any?(Integer))
 
 # my_none? method
 puts(arr.my_none? { |a| (a % 3).zero? })
@@ -103,9 +156,10 @@ puts(arr.map { |a| a * 2 })
 # my_inject method
 puts(arr.my_inject { |sum, a| sum + a })
 puts(arr.inject { |sum, a| sum + a })
+puts(arr.my_inject(:+))
 
 # Testing my_inject method with multiply_els method
 puts multiply_els([2, 4, 5])
 
 # Testing my_map method with passing Proc & Block at the same time
-arr.my_map(proc { |a| a * 3 }) { |a| a * 2 }
+puts arr.my_map(proc { |a| a * 3 }) { |a| a * 2 }
