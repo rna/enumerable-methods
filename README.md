@@ -28,7 +28,6 @@ The following are built wrt Ruby built-in Enumerable methods:
 ### Getting Started
 
 1. Download the module by cloning the repo to your computer ```git clone https://github.com/rna/enumerable-methods.git```
-<br/>
 2. Run the file in the terminal ```ruby main.rb```
 
   <p style="text-align:center">Or</p>
